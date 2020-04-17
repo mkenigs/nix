@@ -35,7 +35,7 @@ struct FlakeRef
 
     static FlakeRef fromAttrs(const fetchers::Attrs & attrs);
 
-    std::pair<fetchers::Tree, FlakeRef> fetchTree(ref<Store> store) const;
+    std::pair<fetchers::Tree, FlakeRef> fetchTree(EvalState & state) const;
 };
 
 std::ostream & operator << (std::ostream & str, const FlakeRef & flakeRef);

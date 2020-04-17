@@ -60,7 +60,7 @@ static void prim_fetchGit(EvalState & state, const Pos & pos, Value * * args, Va
     auto input = fetchers::inputFromAttrs(attrs);
 
     // FIXME: use name?
-    auto [tree, input2] = input->fetchTree(state.store);
+    auto [tree, input2] = input->fetchTree(state);
 
     state.mkAttrs(v, 8);
     auto storePath = state.store->printStorePath(tree.storePath);

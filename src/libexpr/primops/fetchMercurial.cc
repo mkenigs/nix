@@ -63,7 +63,7 @@ static void prim_fetchMercurial(EvalState & state, const Pos & pos, Value * * ar
     // FIXME: use name
     auto input = fetchers::inputFromURL(parsedUrl);
 
-    auto [tree, input2] = input->fetchTree(state.store);
+    auto [tree, input2] = input->fetchTree(state);
 
     state.mkAttrs(v, 8);
     auto storePath = state.store->printStorePath(tree.storePath);

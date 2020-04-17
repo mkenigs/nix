@@ -540,10 +540,10 @@ struct CmdFlakePin : virtual Args, EvalCommand
         auto ref = parseFlakeRef(url);
         auto userRegistry = fetchers::getUserRegistry();
         userRegistry->remove(ref.input);
-        auto [tree, resolved] = ref.resolve(store).input->fetchTree(store);
+        auto [tree, resolved] = ref.resolve(store).input->fetchTree(*getEvalState());
         fetchers::Attrs extraAttrs;
         if (ref.subdir != "") extraAttrs["dir"] = ref.subdir;
-        userRegistry->add(ref.input, resolved, extraAttrs);
+        userRegistry->add(ref.input, resolved.value_or(ref.input), extraAttrs);
     }
 };
 
@@ -658,7 +658,7 @@ struct CmdFlakeArchive : FlakeCommand, MixJSON, MixDryRun
                 assert(lockedInput);
                 auto jsonObj3 = jsonObj2 ? jsonObj2->object(input.first) : std::optional<JSONObject>();
                 if (!dryRun)
-                    lockedInput->lockedRef.input->fetchTree(store);
+                    lockedInput->lockedRef.input->fetchTree(*getEvalState());
                 auto storePath = lockedInput->computeStorePath(*store);
                 if (jsonObj3)
                     jsonObj3->attr("path", store->printStorePath(storePath));

@@ -179,10 +179,10 @@ FlakeRef FlakeRef::fromAttrs(const fetchers::Attrs & attrs)
         fetchers::maybeGetStrAttr(attrs, "dir").value_or(""));
 }
 
-std::pair<fetchers::Tree, FlakeRef> FlakeRef::fetchTree(ref<Store> store) const
+std::pair<fetchers::Tree, FlakeRef> FlakeRef::fetchTree(EvalState & state) const
 {
-    auto [tree, lockedInput] = input->fetchTree(store);
-    return {std::move(tree), FlakeRef(lockedInput, subdir)};
+    auto [tree, lockedInput] = input->fetchTree(state);
+    return {std::move(tree), lockedInput ? FlakeRef(lockedInput.value(), subdir) : *this};
 }
 
 }

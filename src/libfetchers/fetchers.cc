@@ -1,5 +1,6 @@
 #include "fetchers.hh"
 #include "store-api.hh"
+#include "eval-inline.hh"
 
 #include <nlohmann/json.hpp>
 
@@ -52,12 +53,48 @@ Attrs Input::toAttrs() const
     return attrs;
 }
 
-std::pair<Tree, std::shared_ptr<const Input>> Input::fetchTree(ref<Store> store) const
+Tree Input::substituteTree(EvalState & state) const
 {
-    auto [tree, input] = fetchTreeInternal(store);
+    assert(narHash);
+    auto storePath = state.store->makeFixedOutputPath(true, narHash.value, "source");
+
+    state.store->ensurePath(storePath);
+
+    debug("using substituted/cached input '%s' in '%s'",
+        to_string(), state.store->printStorePath(storePath));
+
+    auto actualPath = state.store->toRealPath(storePath);
+
+    if (state.allowedPaths)
+        state.allowedPaths->insert(actualPath);
+
+    return {
+        Tree {
+            .actualPath = actualPath,
+            .storePath = std::move(storePath),
+            .info = { narHash.value() }
+        }
+    };
+}
+
+std::pair<Tree, std::optional<std::shared_ptr<const Input>>> Input::fetchTree(EvalState & state) const
+{
+    if (narHash) {
+        try {
+            auto tree = substituteTree(state);
+            return {std::move(tree), std::nullopt};
+        } catch (Error & e) {
+            debug("substitution of input '%s' failed: %s", to_string(), e.what());
+        }
+    }
+
+    auto [tree, input] = fetchTreeInternal(state.store);
 
     if (tree.actualPath == "")
         tree.actualPath = store->toRealPath(tree.storePath);
+
+    if (state.allowedPaths)
+        state.allowedPaths->insert(tree.actualPath);
 
     if (!tree.info.narHash)
         tree.info.narHash = store->queryPathInfo(tree.storePath)->narHash;

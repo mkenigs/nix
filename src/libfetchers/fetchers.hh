@@ -6,6 +6,7 @@
 #include "tree-info.hh"
 #include "attrs.hh"
 #include "url.hh"
+#include "eval-inline.hh"
 
 #include <memory>
 
@@ -55,7 +56,12 @@ struct Input : std::enable_shared_from_this<Input>
 
     Attrs toAttrs() const;
 
-    std::pair<Tree, std::shared_ptr<const Input>> fetchTree(ref<Store> store) const;
+    /* The tree may already be in the Nix store, or it could be
+       substituted (which is often faster than fetching from the
+       original source). */
+    Tree substituteTree(EvalState & state) const;
+
+    std::pair<Tree, std::optional<std::shared_ptr<const Input>>> fetchTree(EvalState & state) const;
 
     virtual std::shared_ptr<const Input> applyOverrides(
         std::optional<std::string> ref,
