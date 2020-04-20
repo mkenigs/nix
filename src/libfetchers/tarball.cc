@@ -171,7 +171,9 @@ struct TarballInput : Input
     std::optional<Hash> hash;
 
     TarballInput(const ParsedURL & url) : url(url)
-    { }
+    { debug("TarballInput() ctor"); }
+
+    ~TarballInput() { debug("~TarballInput() dtor"); }
 
     std::string type() const override { return "tarball"; }
 
