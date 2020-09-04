@@ -197,7 +197,7 @@ static FlakeInput parseFlakeInput(EvalState & state,
             input.ref = parseFlakeRef(*url, {}, true);
     }
 
-    if (!input.follows && !input.ref && defaultRef)
+    if (!input.follows && !input.ref)
         input.ref = FlakeRef::fromAttrs({{"type", "indirect"}, {"id", inputName}});
 
     return input;
