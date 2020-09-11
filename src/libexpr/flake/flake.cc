@@ -88,10 +88,10 @@ static void expectType(EvalState & state, ValueType type,
 }
 
 static std::map<FlakeId, FlakeInput> parseFlakeInputs(
-    EvalState & state, Value * value, const Pos & pos);
+    EvalState & state, Value * value, const Pos & pos, bool defaultRef = true);
 
 static FlakeInput parseFlakeInput(EvalState & state,
-    const std::string & inputName, Value * value, const Pos & pos)
+    const std::string & inputName, Value * value, const Pos & pos, bool defaultRef = true)
 {
     expectType(state, nAttrs, *value, pos);
 
@@ -115,7 +115,7 @@ static FlakeInput parseFlakeInput(EvalState & state,
                 expectType(state, nBool, *attr.value, *attr.pos);
                 input.isFlake = attr.value->boolean;
             } else if (attr.name == sInputs) {
-                input.overrides = parseFlakeInputs(state, attr.value, *attr.pos);
+                input.overrides = parseFlakeInputs(state, attr.value, *attr.pos, false);
             } else if (attr.name == sFollows) {
                 expectType(state, nString, *attr.value, *attr.pos);
                 input.follows = parseInputPath(attr.value->string.s);
@@ -156,14 +156,14 @@ static FlakeInput parseFlakeInput(EvalState & state,
             input.ref = parseFlakeRef(*url, {}, true);
     }
 
-    if (!input.follows && !input.ref)
+    if (!input.follows && !input.ref && defaultRef)
         input.ref = FlakeRef::fromAttrs({{"type", "indirect"}, {"id", inputName}});
 
     return input;
 }
 
 static std::map<FlakeId, FlakeInput> parseFlakeInputs(
-    EvalState & state, Value * value, const Pos & pos)
+    EvalState & state, Value * value, const Pos & pos, bool defaultRef)
 {
     std::map<FlakeId, FlakeInput> inputs;
 
@@ -174,7 +174,8 @@ static std::map<FlakeId, FlakeInput> parseFlakeInputs(
             parseFlakeInput(state,
                 inputAttr.name,
                 inputAttr.value,
-                *inputAttr.pos));
+                *inputAttr.pos,
+                defaultRef));
     }
 
     return inputs;
